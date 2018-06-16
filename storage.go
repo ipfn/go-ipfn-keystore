@@ -17,6 +17,8 @@ package keystore
 
 // RawStorage - Key-value raw storage interface.
 type RawStorage interface {
+	// Names - Returns names of available keys.
+	Names() ([]string, error)
 	// Get - Gets raw encrypted key.
 	Get(string) ([]byte, error)
 	// Put - Puts raw encrypted key.
@@ -25,6 +27,8 @@ type RawStorage interface {
 
 // Storage - Key-value storage interface.
 type Storage interface {
+	// Names - Returns names of available keys.
+	Names() ([]string, error)
 	// Get - Gets encrypted key.
 	Get(string) (*EncryptedKey, error)
 	// Put - Puts encrypted key.
