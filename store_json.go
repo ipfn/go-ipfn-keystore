@@ -12,50 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package keystore implements cryptographic key store.
-package keystore
+package store
 
 import (
 	"encoding/json"
-
-	crypto "github.com/ipfn/go-ipfn-crypto"
 )
 
-// JSONStorage - JSON key-store wrapper.
-type JSONStorage struct {
-	RawStorage
+// NewJSONStore - Creates a new JSON marshaled key-value storage.
+func NewJSONStore(storage RawStore) EncodedStore {
+	return &jsonStore{RawStore: storage}
 }
 
-// NewJSONStorage - Creates a new keystore from storage.
-func NewJSONStorage(storage RawStorage) (store *JSONStorage, err error) {
-	return &JSONStorage{RawStorage: storage}, nil
+// jsonStore - JSON key-store wrapper.
+type jsonStore struct {
+	RawStore
 }
 
-// Get - Gets encrypted cryptographic key.
-func (store *JSONStorage) Get(name string) (key *EncryptedKey, err error) {
-	body, err := store.RawStorage.Get(name)
+// Get - Gets unmarshaled value by key.
+func (store *jsonStore) Get(name string, value interface{}) (err error) {
+	body, err := store.RawStore.Get(name)
 	if err != nil {
 		return
 	}
-	key = new(EncryptedKey)
-	err = json.Unmarshal(body, key)
-	return
+	return json.Unmarshal(body, value)
 }
 
-// Put - Puts encrypted cryptographic key.
-func (store *JSONStorage) Put(name string, body, password []byte) (err error) {
-	ciphertext, nonce, salt, err := crypto.Encrypt(body, password)
+// Put - Puts marshaled key.
+func (store *jsonStore) Put(name string, value interface{}) error {
+	marshaled, err := json.Marshal(value)
 	if err != nil {
-		return
+		return err
 	}
-	marshaled, err := json.Marshal(EncryptedKey{
-		Ciphertext: ciphertext,
-		Nonce:      nonce,
-		Salt:       salt,
-	})
-	if err != nil {
-		return
-	}
-	err = store.RawStorage.Put(name, marshaled)
-	return
+	return store.RawStore.Put(name, marshaled)
 }
